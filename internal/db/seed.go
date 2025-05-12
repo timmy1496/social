@@ -142,7 +142,7 @@ func generateUsers(num int) []*store.User {
 	users := make([]*store.User, num)
 
 	for i := 0; i < num; i++ {
-		userName := usernames[i%len(usernames)] + fmt.Sprintf("%s", i)
+		userName := usernames[i%len(usernames)] + fmt.Sprintf("%d", i)
 
 		users[i] = &store.User{
 			Username: userName,

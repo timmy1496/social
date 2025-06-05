@@ -69,6 +69,10 @@ func (app *application) mount() http.Handler {
 				r.Get("/feed", app.getUserFeedHandler)
 			})
 		})
+
+		r.Route("/authentication", func(r chi.Router) {
+			r.Post("user", app.registerUserHandler)
+		})
 	})
 
 	return r
@@ -88,6 +92,6 @@ func (app *application) run(mux http.Handler) error {
 	}
 
 	app.logger.Infow("server has started", "addr", app.config.addr, "env", app.config.env)
- 
+
 	return srv.ListenAndServe()
 }

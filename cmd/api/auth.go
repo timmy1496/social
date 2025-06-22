@@ -1,6 +1,9 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"github.com/google/uuid"
 	"github.com/timmy1496/social/internal/store"
 	"net/http"
 )
@@ -47,7 +50,25 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 
 	ctx := r.Context()
 
-	err := app.storage.Users.CreateAndInvite(ctx, user, "token")
+	plainToken := uuid.New().String()
+
+	hash := sha256.Sum256([]byte(plainToken))
+	hashToken := hex.EncodeToString(hash[:])
+
+	err := app.storage.Users.CreateAndInvite(ctx, user, hashToken, app.config.mail.exp)
+
+	if err != nil {
+		switch err {
+		case store.ErrDuplicateEmail:
+			app.badRequestResponse(w, r, err)
+		case store.ErrDuplicateUsername:
+			app.badRequestResponse(w, r, err)
+		default:
+			app.internalServerError(w, r, err)
+		}
+
+		return
+	}
 
 	if err := jsonResponse(w, http.StatusCreated, nil); err != nil {
 		app.internalServerError(w, r, err)

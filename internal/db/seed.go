@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"github.com/timmy1496/social/internal/store"
 	"log"
@@ -108,16 +109,20 @@ var comments = []string{
 	"Can you link to more resources on this?",
 }
 
-func Seed(store *store.Storage) {
+func Seed(store *store.Storage, db *sql.DB) {
 	ctx := context.Background()
 
 	users := generateUsers(100)
+	tx, _ := db.BeginTx(ctx, nil)
 	for _, user := range users {
-		if err := store.Users.Create(ctx, user); err != nil {
+		if err := store.Users.Create(ctx, tx, user); err != nil {
+			_ = tx.Rollback()
 			log.Println("Error seeding user", err)
 			return
 		}
 	}
+
+	tx.Commit()
 
 	posts := generatePosts(200, users)
 	for _, post := range posts {
@@ -147,7 +152,6 @@ func generateUsers(num int) []*store.User {
 		users[i] = &store.User{
 			Username: userName,
 			Email:    userName + "@example.com",
-			Password: "123",
 		}
 	}
 
